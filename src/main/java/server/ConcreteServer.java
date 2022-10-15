@@ -80,9 +80,10 @@ public class ConcreteServer implements Server {
     }
 
     @Override
-    public void send() {
-        String response = "world";
-        socket.send(response.getBytes(ZMQ.CHARSET), 0);
+    public void send(byte[] clientAddress, Message message) {
+        this.socket.sendMore(clientAddress);
+        this.socket.sendMore("".getBytes());
+        this.socket.send(message.toBytes(), 0);
     }
 
     public boolean clientInTopic(String topic, Integer clientID) {
