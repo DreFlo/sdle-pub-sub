@@ -2,12 +2,6 @@ package messages.serverMessages;
 
 import messages.Message;
 
-enum SubscriptionState {
-    SUBSCRIBED,
-    UNSUBSCRIBED,
-    ERROR
-}
-
 public class SubscriptionReplyMessage extends Message {
     private final SubscriptionState subscriptionState;
 

@@ -2,7 +2,7 @@ package messages;
 
 import java.io.*;
 
-public abstract class Message {
+public abstract class Message implements Serializable{
     private final Integer clientId;
 
     public Message(Integer clientId){

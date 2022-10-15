@@ -1,13 +1,18 @@
 package server.handlers;
 
 import messages.Message;
+import server.Server;
 
-public abstract class Handler {
-    private final Message message;
+public abstract class Handler<M extends Message, S extends Server> implements Runnable{
+    protected final M message;
+    protected final S server;
+    protected byte[] address;
 
-    public Handler(Message message) {
+    public Handler(byte[] address, M message, S server) {
         this.message = message;
+        this.server = server;
+        this.address = address;
     }
 
-    abstract void run();
+    public abstract void run();
 }

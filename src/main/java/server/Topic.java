@@ -2,15 +2,13 @@ package server;
 
 import org.zeromq.ZMQ;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.Serializable;
+import java.util.*;
 
-public class Topic {
-    private String name;
+public class Topic implements Serializable {
+    private final String name;
     private List<byte[]> messages;
-    private HashMap<Integer, Integer> clients;
+    private final HashMap<Integer, Integer> clients;
 
     public Topic(String name){
         this.name = name;
@@ -32,9 +30,6 @@ public class Topic {
 
     public void addMessage(byte[] message){
         this.messages.add(message);
-        for(Map.Entry<Integer, Integer> client : this.clients.entrySet()){
-            this.clients.replace(client.getKey(), client.getValue());
-        }
     }
 
     public void addClient(Integer clientID){
@@ -49,7 +44,21 @@ public class Topic {
         if(idx == this.messages.size()){
             return new String("Already got everything in topic.").getBytes(ZMQ.CHARSET);
         } else {
-            return this.messages.get(idx);
+            byte[] message = this.messages.get(idx);
+            incrementClientIndex(clientID);
+            deleteOldMessages();
+            return message;
+        }
+    }
+
+    private void deleteOldMessages() {
+        OptionalInt minIndex = clients.values().stream().mapToInt(v -> v).min();
+
+        if (minIndex.isPresent()) {
+            this.messages = this.messages.subList(minIndex.getAsInt(), this.messages.size());
+            for(Map.Entry<Integer, Integer> client : this.clients.entrySet()){
+                this.clients.replace(client.getKey(), client.getValue() - minIndex.getAsInt());
+            }
         }
     }
 
@@ -62,5 +71,18 @@ public class Topic {
         for(Map.Entry<Integer, Integer> client : this.clients.entrySet()){
             this.clients.replace(client.getKey(), client.getValue() - num);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Topic)) return false;
+        Topic topic = (Topic) o;
+        return getName().equals(topic.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName());
     }
 }

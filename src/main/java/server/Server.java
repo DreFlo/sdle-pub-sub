@@ -3,6 +3,6 @@ package server;
 import messages.Message;
 
 public interface Server {
-    Message receive();
-    void send();
+    ReceivePair receive();
+    void send(byte[] clientAddress, Message message);
 }
