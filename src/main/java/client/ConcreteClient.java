@@ -4,6 +4,7 @@ import messages.clientMessages.GetMessage;
 import messages.Message;
 import messages.clientMessages.PutMessage;
 import messages.clientMessages.SubscribeMessage;
+import messages.serverMessages.SubscriptionReplyMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
@@ -41,13 +42,18 @@ public class ConcreteClient implements Client {
 
             for (int requestNbr = 0; requestNbr != 10; requestNbr++) {
                 String request = "Hello";
+                SubscribeMessage message = new SubscribeMessage(2, "azeitonas");
+
+                socket.send(message.toBytes(), 0);
 
                 byte[] reply = socket.recv(0);
                 System.out.println(
-                        "Received " + new String(reply, ZMQ.CHARSET) + " " +
+                        "Received " + SubscriptionReplyMessage.fromBytes(reply) + " " +
                                 requestNbr
                 );
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

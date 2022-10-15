@@ -62,8 +62,16 @@ public class ConcreteServer implements Server {
     }
 
     @Override
-    public Message receive() {
-        byte[] reply = socket.recv(0);
+    public ReceivePair receive() {
+        byte[] client_addr = socket.recv(0);
+
+        byte[] empty = socket.recv(0);
+        if(empty.length != 0) throw new RuntimeException("Problem in message");
+
+        // Message receivedMessage = this.receive();
+        // System.out.println(receivedMessage.getClientId());
+        byte[] receivedMsgBytes = socket.recv(0);
+
         try {
             return new ReceivePair(client_addr, Message.fromBytes(receivedMsgBytes));
         } catch (IOException e) {
