@@ -32,11 +32,17 @@ public class Topic implements Serializable {
         this.messages.add(message);
     }
 
-    public void addClient(Integer clientID){
+    public void addClient(int clientID){
         this.clients.put(clientID, this.messages.size() - 1);
     }
 
-    public byte[] getMessage(Integer clientID){
+    public void removeClient(int clientID) { this.clients.remove(clientID); }
+
+    public boolean hasClient(int clientId) {
+        return this.clients.containsKey(clientId);
+    }
+
+    public byte[] getMessage(int clientID){
         Integer idx = this.clients.get(clientID);
 
         if(idx == null) throw new RuntimeException("No Client with ID: " + clientID);

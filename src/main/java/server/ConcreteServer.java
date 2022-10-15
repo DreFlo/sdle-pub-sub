@@ -15,6 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ConcreteServer implements Server {
+
+    private final int NTHREADS = 4;
     private ZContext context;
     private Socket socket;
     private Map<String, Topic> topics;
