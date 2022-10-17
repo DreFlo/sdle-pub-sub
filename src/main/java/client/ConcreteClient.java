@@ -86,7 +86,6 @@ public class ConcreteClient implements Client {
     @Override
     public void subscribe(String topic) {
         subscribed.add(topic);
-        // TODO Other stuff
         try {
             send(new SubscribeMessage(this.id, topic));
         } catch (MessageTypeNotSupportedException e) {

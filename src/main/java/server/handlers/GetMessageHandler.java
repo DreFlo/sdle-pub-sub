@@ -11,8 +11,8 @@ public class GetMessageHandler extends Handler<GetMessage, ConcreteServer>{
 
     @Override
     public void run() {
-        if(!this.server.clientInTopic(this.message.getTopic(), this.message.getClientId())){
-            // TODO: send NotSubscribed Message
+        if(!this.server.clientInTopic(this.message.getTopic(), new String(address))){
+            this.server.send(this.address, new NotSubscribedMessage());
             return;
         }
         this.server.getClientMessagesPerTopic(this.message.getTopic(), this.message.getClientId());

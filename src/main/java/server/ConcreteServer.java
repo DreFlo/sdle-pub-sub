@@ -88,13 +88,13 @@ public class ConcreteServer implements Server {
         this.socket.send(message.toBytes(), 0);
     }
 
-    public boolean clientInTopic(String topic, Integer clientID) {
+    public boolean clientInTopic(String topic, String clientID) {
         // TODO: exception -> topic does not exist
         if(!this.topics.containsKey(topic)) return false;
         return topics.get(topic).hasClient(clientID);
     }
 
-    public void addClientToTopic(String topic, Integer clientId) {
+    public void addClientToTopic(String topic, String clientId) {
         // TODO Data permanence
         if (!topics.containsKey(topic)) {
             topics.put(topic, new Topic(topic));
@@ -110,7 +110,7 @@ public class ConcreteServer implements Server {
         this.topics.get(topic).removeClient(clientId);
     }
 
-    public byte[] getClientMessagesPerTopic(String topic, int clientID) {
+    public byte[] getClientMessagesPerTopic(String topic, String clientID) {
         return this.topics.get(topic).getMessage(clientID);
     }
 
