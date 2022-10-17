@@ -8,9 +8,11 @@ import messages.clientMessages.UnsubscribeMessage;
 import messages.serverMessages.PutReplyMessage;
 import messages.serverMessages.SubscriptionReplyMessage;
 import messages.serverMessages.SubscriptionState;
+import messages.serverMessages.TopicArticleMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
+import java.io.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,63 +20,92 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ConcreteClient implements Client {
-    private String id;
     private ZContext context;
     private ZMQ.Socket socket;
     private List<String> subscribed;
 
-    public ConcreteClient() {
-        this.subscribed = new ArrayList<>();
 
+    public ConcreteClient(String id) {
+        this.subscribed = new ArrayList<>();
         try {
             this.context = new ZContext();
             this.socket = context.createSocket(SocketType.REQ);
+            this.socket.setIdentity(id.getBytes());
             socket.connect("tcp://localhost:5555");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
+    //client id
+
+    //client put topic "1321312"
+
     public static void main(String[] args) {
-        try (ZContext context = new ZContext()) {
-            System.out.println("Connecting to hello world server");
-
-            //  Socket to talk to server
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            socket.connect("tcp://localhost:5555");
-
-            for (int requestNbr = 0; requestNbr != 10; requestNbr++) {
-                String request = "Hello";
-                SubscribeMessage message = new SubscribeMessage("azeitonas");
-
-                int id = 3;
-                socket.setIdentity(Integer.toString(id).getBytes());
-                socket.send(message.toBytes(), 0);
-
-                byte[] reply = socket.recv(0);
-                System.out.println(
-                        "Received " + SubscriptionReplyMessage.fromBytes(reply) + " " +
-                                requestNbr
-                );
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        System.out.println(args.length);
+        if(args.length == 3){ //client put topic msg
+            ConcreteClient client = new ConcreteClient("0");
+            client.put(args[1], args[2].getBytes());
+        }
+        else if (args.length == 1){ //client id
+            ConcreteClient client = new ConcreteClient(args[0]);
+            client.run();
+        }
+        else {
+            System.out.println("Invalid arguments.");
+            System.out.println("Either 'id' or 'put topic msg'");
         }
     }
 
-    @Override
-    public List<Message> get() {    
-        return subscribed.stream().map(this::get).collect(Collectors.toList());
+    private void run(){
+        Console cnsl = System.console();
+        boolean exit = false;
+        while (!exit){
+            String line = cnsl.readLine("Enter command: ");
+            String[] args = line.split(" ");
+
+            switch(args[0]){
+                case "put":
+                    this.put(args[1], args[2].getBytes());
+                    break;
+                case "get":
+                    if(args.length == 1)
+                        this.get();
+                    else
+                        this.get(args[1]);
+                    break;
+                case "subscribe":
+                    this.subscribe(args[1]);
+                    break;
+                case "unsubscribe":
+                    break;
+                case "exit":
+                    exit = true;
+                    break;
+            }
+        }
+
     }
 
     @Override
-    public Message get(String topic) {
+    public void get() {
+        subscribed.forEach(this::get);
+    }
+
+    @Override
+    public void get(String topic) {
         try {
             send(new GetMessage(topic));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
-        return receive();
+
+        Message receivedMessage = this.receive();
+        if(receivedMessage instanceof TopicArticleMessage){
+            System.out.println("Got message:");
+            System.out.println(new String(((TopicArticleMessage) receivedMessage).getArticle()));
+        }
+        else System.out.println("Invalid response from server in put attempt.");
     }
 
     @Override

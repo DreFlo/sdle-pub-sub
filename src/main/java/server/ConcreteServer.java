@@ -21,6 +21,7 @@ public class ConcreteServer implements Server {
     private Socket socket;
     private Map<String, Topic> topics;
     private ExecutorService executorService;
+    private ServerSerializer serverSerializer;
 
     public ConcreteServer() {
         try {
@@ -31,6 +32,8 @@ public class ConcreteServer implements Server {
             socket.bind("tcp://*:5555");
 
             this.executorService = Executors.newFixedThreadPool(NTHREADS);
+
+            this.serverSerializer = new ServerSerializer();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -98,28 +101,35 @@ public class ConcreteServer implements Server {
     }
 
     public void addClientToTopic(String topic, String clientId) {
-        // TODO Data permanence
         if (!topics.containsKey(topic)) {
             topics.put(topic, new Topic(topic));
         }
         topics.get(topic).addClient(clientId);
+        saveTopic(topic);
     }
 
     public void rmClientFromTopic(String topic, String clientId) {
-        // TODO Data permanence
         if (!this.topics.containsKey(topic)) {
             return;
         }
         this.topics.get(topic).removeClient(clientId);
+        saveTopic(topic);
     }
 
     public byte[] getClientMessagesPerTopic(String topic, String clientID) {
-        return this.topics.get(topic).getMessage(clientID);
+        byte[] msg = this.topics.get(topic).getMessage(clientID);
+        saveTopic(topic);
+        return msg;
     }
 
     public void putMessageInTopic(String topic, byte[] message) {
         if (topics.containsKey(topic)) {
             topics.get(topic).addMessage(message);
+            saveTopic(topic);
         }
+    }
+
+    private void saveTopic(String topic) {
+        serverSerializer.writeTopic(topics.get(topic));
     }
 }

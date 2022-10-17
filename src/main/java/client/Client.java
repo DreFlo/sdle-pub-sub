@@ -5,8 +5,8 @@ import messages.Message;
 import java.util.List;
 
 public interface Client {
-    List<Message> get();
-    Message get(String topic);
+    void get();
+    void get(String topic);
     void put(String topic, byte[] message);
     void subscribe(String topic);
     void unsubscribe(String topic);

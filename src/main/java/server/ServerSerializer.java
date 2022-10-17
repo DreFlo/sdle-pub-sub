@@ -14,9 +14,9 @@ public class ServerSerializer {
     }
     
     public void writeTopics(Iterable<Topic> topics) {
-            for(Topic topic : topics) {
-                writeTopic(topic);
-            }
+        for(Topic topic : topics) {
+            writeTopic(topic);
+        }
     }
 
     public Map<String, Topic> readTopics() {
@@ -33,7 +33,7 @@ public class ServerSerializer {
         return ret;
     }
 
-    private void writeTopic(Topic topic) {
+    public void writeTopic(Topic topic) {
         try {
             File ftopic = new File(dir + topic.getName());
             ftopic.createNewFile();
@@ -47,7 +47,7 @@ public class ServerSerializer {
         }
     }
 
-    private Topic readTopic(String topic) {
+    public Topic readTopic(String topic) {
         try {
             FileInputStream fin = new FileInputStream(dir + topic);
             ObjectInputStream oin = new ObjectInputStream(fin);
