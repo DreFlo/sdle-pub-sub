@@ -10,28 +10,17 @@ public class ServerSerializer {
     private String dir;
 
     public ServerSerializer() {
-        this.dir = "/topics/";
+        this.dir = "topics/";
     }
 
-    public void writeTopic(Topic topic) {
-        FileOutputStream fout = null;
-        try {
-            fout = new FileOutputStream(dir + topic.getName());
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        ObjectOutputStream oout = null;
-        try {
-            oout = new ObjectOutputStream(fout);
-            oout.writeObject(topic);
-            oout.close();
-            fout.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void writeTopics(Iterable<Topic> topics) {
+            for(Topic topic : topics) {
+                writeTopic(topic);
+            }
     }
 
-    public Map<String, Topic> getTopics() throws IOException {
+
+    public Map<String, Topic> readTopics() {
         File directory = new File(dir);
         File[] topics = directory.listFiles();
         HashMap<String, Topic> ret = new HashMap<>();
@@ -45,20 +34,32 @@ public class ServerSerializer {
         return ret;
     }
 
-    private Topic readTopic(String topic) {
-        FileInputStream fin = null;
-        ObjectInputStream oin = null;
+    private void writeTopic(Topic topic) {
         try {
-            fin = new FileInputStream(topic);
-            oin = new ObjectInputStream(fin);
+            File ftopic = new File(dir + topic.getName());
+            ftopic.createNewFile();
+            FileOutputStream fout = new FileOutputStream(ftopic);
+            ObjectOutputStream oout = new ObjectOutputStream(fout);
+            oout.writeObject(topic);
+            oout.close();
+            fout.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Topic readTopic(String topic) {
+        try {
+            FileInputStream fin = new FileInputStream(dir + topic);
+            ObjectInputStream oin = new ObjectInputStream(fin);
             Topic ret = (Topic) oin.readObject();
+            oin.close();
+            fin.close();
+            return ret;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            oin.close();
-            fin.close();
         }
     }
 
