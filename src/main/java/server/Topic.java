@@ -38,7 +38,7 @@ public class Topic implements Serializable {
 
     public void removeClient(String clientID) { this.clients.remove(clientID); }
 
-    public boolean hasClient(int clientId) {
+    public boolean hasClient(String clientId) {
         return this.clients.containsKey(clientId);
     }
 

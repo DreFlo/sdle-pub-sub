@@ -18,6 +18,6 @@ public class PutMessageHandler extends Handler<PutMessage, ConcreteServer>{
             return;
         }
         this.server.putMessageInTopic(this.message.getTopic(), this.message.getArticle());
-
+        this.server.send(this.address, new PutReplyMessage());
     }
 }

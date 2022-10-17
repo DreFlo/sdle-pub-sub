@@ -1,7 +1,10 @@
 package server.handlers;
 
 import messages.clientMessages.GetMessage;
+import messages.serverMessages.NotSubscribedMessage;
+import messages.serverMessages.TopicArticleMessage;
 import server.ConcreteServer;
+import server.Topic;
 
 public class GetMessageHandler extends Handler<GetMessage, ConcreteServer>{
 
