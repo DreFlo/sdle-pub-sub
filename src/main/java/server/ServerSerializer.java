@@ -12,7 +12,7 @@ public class ServerSerializer {
     public ServerSerializer() {
         this.dir = "/topics/";
     }
-
+    /*
     public void writeTopic(Topic topic) {
         FileOutputStream fout = null;
         try {
@@ -60,6 +60,6 @@ public class ServerSerializer {
             oin.close();
             fin.close();
         }
-    }
+    }*/
 
 }

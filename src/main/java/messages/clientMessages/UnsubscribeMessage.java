@@ -6,13 +6,8 @@ public class UnsubscribeMessage extends Message {
 
     private final String topic;
 
-    public UnsubscribeMessage(Integer clientId, String topic){
-        super(clientId);
+    public UnsubscribeMessage(String topic){
         this.topic = topic;
-    }
-
-    public Integer getClientID() {
-        return getClientId();
     }
 
     public String getTopic() {

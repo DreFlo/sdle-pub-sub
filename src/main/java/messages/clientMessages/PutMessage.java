@@ -6,8 +6,7 @@ public class PutMessage extends Message {
     private final String topic;
     private final byte[] article;
 
-    public PutMessage(Integer clientId, String topic, byte[] article) {
-        super(clientId);
+    public PutMessage(String topic, byte[] article) {
         this.topic = topic;
         this.article = article;
     }

@@ -15,7 +15,7 @@ public class GetMessageHandler extends Handler<GetMessage, ConcreteServer>{
             this.server.send(this.address, new NotSubscribedMessage());
             return;
         }
-        this.server.getClientMessagesPerTopic(this.message.getTopic(), this.message.getClientId());
-
+        byte[] article = this.server.getClientMessagesPerTopic(this.message.getTopic(), new String(address));
+        this.server.send(address, new TopicArticleMessage(article));
     }
 }

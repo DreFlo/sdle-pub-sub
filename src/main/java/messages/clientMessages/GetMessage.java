@@ -5,8 +5,7 @@ import messages.Message;
 public class GetMessage extends Message {
     private final String topic;
 
-    public GetMessage(Integer clientId, String topic) {
-        super(clientId);
+    public GetMessage(String topic) {
         this.topic = topic;
     }
 

@@ -13,11 +13,11 @@ public class SubscribeMessageHandler extends Handler<SubscribeMessage, ConcreteS
 
     @Override
     public void run() {
-        this.server.addClientToTopic(this.message.getTopic(), this.message.getClientID());
+        this.server.addClientToTopic(this.message.getTopic(), new String(address));
 
         System.out.println("Client subscribed to topic");
 
-        SubscriptionReplyMessage replyMessage = new SubscriptionReplyMessage(this.message.getClientID(), SubscriptionState.SUBSCRIBED);
+        SubscriptionReplyMessage replyMessage = new SubscriptionReplyMessage(SubscriptionState.SUBSCRIBED);
 
         this.server.send(this.address, replyMessage);
     }

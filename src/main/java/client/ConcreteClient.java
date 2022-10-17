@@ -4,7 +4,10 @@ import messages.clientMessages.GetMessage;
 import messages.Message;
 import messages.clientMessages.PutMessage;
 import messages.clientMessages.SubscribeMessage;
+import messages.clientMessages.UnsubscribeMessage;
+import messages.serverMessages.PutReplyMessage;
 import messages.serverMessages.SubscriptionReplyMessage;
+import messages.serverMessages.SubscriptionState;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
@@ -15,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ConcreteClient implements Client {
-    private Integer id;
+    private String id;
     private ZContext context;
     private ZMQ.Socket socket;
     private List<String> subscribed;
@@ -42,8 +45,10 @@ public class ConcreteClient implements Client {
 
             for (int requestNbr = 0; requestNbr != 10; requestNbr++) {
                 String request = "Hello";
-                SubscribeMessage message = new SubscribeMessage(2, "azeitonas");
+                SubscribeMessage message = new SubscribeMessage("azeitonas");
 
+                int id = 3;
+                socket.setIdentity(Integer.toString(id).getBytes());
                 socket.send(message.toBytes(), 0);
 
                 byte[] reply = socket.recv(0);
@@ -65,7 +70,7 @@ public class ConcreteClient implements Client {
     @Override
     public Message get(String topic) {
         try {
-            send(new GetMessage(this.id, topic));
+            send(new GetMessage(topic));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
@@ -75,30 +80,53 @@ public class ConcreteClient implements Client {
     @Override
     public void put(String topic, byte[] message) {
         try {
-            send(new PutMessage(this.id, topic, message));
+            send(new PutMessage(topic, message));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
-        receive();
-        // TODO Check ack
+
+        Message receivedMessage = this.receive();
+        if(receivedMessage instanceof PutReplyMessage){
+            System.out.println("Successful put in topic: " + topic);
+        }
+        else System.out.println("Invalid response from server in put attempt.");
     }
 
     @Override
     public void subscribe(String topic) {
         subscribed.add(topic);
         try {
-            send(new SubscribeMessage(this.id, topic));
+            send(new SubscribeMessage(topic));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
-        receive();
-        // TODO Check ack
+
+        Message receivedMessage = this.receive();
+        if(receivedMessage instanceof SubscriptionReplyMessage){
+            if(((SubscriptionReplyMessage) receivedMessage).getSubscriptionState() == SubscriptionState.SUBSCRIBED)
+                System.out.println("Successful subscription to topic: " + topic);
+            else System.out.println("Subscription wasn't successful");
+        }
+        else System.out.println("Invalid response from server in subscription attempt.");
     }
 
     @Override
     public void unsubscribe(String topic) {
         subscribed.remove(topic);
-        // TODO Other stuff
+
+        try {
+            send(new UnsubscribeMessage(topic));
+        } catch (MessageTypeNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+
+        Message receivedMessage = this.receive();
+        if(receivedMessage instanceof SubscriptionReplyMessage){
+            if(((SubscriptionReplyMessage) receivedMessage).getSubscriptionState() == SubscriptionState.UNSUBSCRIBED)
+                System.out.println("Successful unsubscription to topic: " + topic);
+            else System.out.println("Unsubscription wasn't successful");
+        }
+        else System.out.println("Invalid response from server in unsubscription attempt.");
     }
 
     @Override

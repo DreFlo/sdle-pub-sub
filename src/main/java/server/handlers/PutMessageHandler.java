@@ -1,6 +1,8 @@
 package server.handlers;
 
 import messages.clientMessages.PutMessage;
+import messages.serverMessages.NotSubscribedMessage;
+import messages.serverMessages.PutReplyMessage;
 import server.ConcreteServer;
 
 public class PutMessageHandler extends Handler<PutMessage, ConcreteServer>{
@@ -11,8 +13,8 @@ public class PutMessageHandler extends Handler<PutMessage, ConcreteServer>{
 
     @Override
     public void run() {
-        if(!this.server.clientInTopic(this.message.getTopic(), this.message.getClientId())){
-            // TODO: send NotSubscribed Message
+        if(!this.server.clientInTopic(this.message.getTopic(), new String(address))){
+            this.server.send(this.address, new NotSubscribedMessage());
             return;
         }
         this.server.putMessageInTopic(this.message.getTopic(), this.message.getArticle());

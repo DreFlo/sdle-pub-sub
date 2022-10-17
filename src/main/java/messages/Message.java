@@ -3,15 +3,6 @@ package messages;
 import java.io.*;
 
 public abstract class Message implements Serializable{
-    private final Integer clientId;
-
-    public Message(Integer clientId){
-        this.clientId = clientId;
-    }
-
-    public Integer getClientId() {
-        return clientId;
-    }
 
     public final byte[] toBytes() {
         try (

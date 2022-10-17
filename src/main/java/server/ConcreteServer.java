@@ -54,6 +54,8 @@ public class ConcreteServer implements Server {
 
                 ReceivePair received = this.receive();
 
+                System.out.println(received.message());
+
                 Handler<? extends Message, ? extends Server> handler = MessageHandlerBuilder.getHandler(
                         received.address(), received.message(), this
                 );
@@ -70,6 +72,7 @@ public class ConcreteServer implements Server {
         byte[] empty = socket.recv(0);
         if(empty.length != 0) throw new RuntimeException("Problem in message");
 
+        System.out.println(new String(client_addr));
         // Message receivedMessage = this.receive();
         // System.out.println(receivedMessage.getClientId());
         byte[] receivedMsgBytes = socket.recv(0);
@@ -102,7 +105,7 @@ public class ConcreteServer implements Server {
         topics.get(topic).addClient(clientId);
     }
 
-    public void rmClientFromTopic(String topic, Integer clientId) {
+    public void rmClientFromTopic(String topic, String clientId) {
         // TODO Data permanence
         if (!this.topics.containsKey(topic)) {
             return;

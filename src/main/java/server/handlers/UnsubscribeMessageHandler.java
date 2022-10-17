@@ -10,7 +10,7 @@ public class UnsubscribeMessageHandler extends Handler<UnsubscribeMessage, Concr
 
     @Override
     public void run() {
-        this.server.rmClientFromTopic(this.message.getTopic(), this.message.getClientID());
+        this.server.rmClientFromTopic(this.message.getTopic(), new String(address));
 
         System.out.println("Client unsubscribed from topic");
     }
