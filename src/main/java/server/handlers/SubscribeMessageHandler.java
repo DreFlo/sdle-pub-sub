@@ -13,7 +13,11 @@ public class SubscribeMessageHandler extends Handler<SubscribeMessage, ConcreteS
 
     @Override
     public void run() {
+        System.out.println(server.getTopic(message.getTopic()));
+
         this.server.addClientToTopic(this.message.getTopic(), new String(address));
+
+        System.out.println(server.getTopic(message.getTopic()));
 
         System.out.println("Client subscribed to topic");
 

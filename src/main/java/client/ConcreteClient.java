@@ -5,13 +5,12 @@ import messages.Message;
 import messages.clientMessages.PutMessage;
 import messages.clientMessages.SubscribeMessage;
 import messages.clientMessages.UnsubscribeMessage;
-import messages.serverMessages.PutReplyMessage;
-import messages.serverMessages.SubscriptionReplyMessage;
-import messages.serverMessages.SubscriptionState;
-import messages.serverMessages.TopicArticleMessage;
+import messages.serverMessages.*;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
+import server.ReceivePair;
+
 import java.io.*;
 
 import java.io.IOException;
@@ -101,9 +100,12 @@ public class ConcreteClient implements Client {
         }
 
         Message receivedMessage = this.receive();
-        if(receivedMessage instanceof TopicArticleMessage){
+        if (receivedMessage instanceof TopicArticleMessage){
             System.out.println("Got message:");
             System.out.println(new String(((TopicArticleMessage) receivedMessage).getArticle()));
+        }
+        else if (receivedMessage instanceof NotSubscribedMessage) {
+            System.out.println("Not subscribed to topic: " + topic);
         }
         else System.out.println("Invalid response from server in put attempt.");
     }
@@ -117,6 +119,7 @@ public class ConcreteClient implements Client {
         }
 
         Message receivedMessage = this.receive();
+
         if(receivedMessage instanceof PutReplyMessage){
             System.out.println("Successful put in topic: " + topic);
         }
@@ -162,20 +165,16 @@ public class ConcreteClient implements Client {
 
     @Override
     public void send(Message message) throws MessageTypeNotSupportedException {
-        if (message instanceof GetMessage getMessage) {
-            System.out.println("Sending Hello " + getMessage.getTopic());
-            socket.send(getMessage.toBytes(), 0);
-        }
-        else {
-            throw new MessageTypeNotSupportedException("Expected GetMessage Type");
-        }
+        socket.send(message.toBytes(), 0);
     }
 
     @Override
     public Message receive() {
-        byte[] reply = socket.recv(0);
+        byte[] receivedMsgBytes = socket.recv(0);
+
         try {
-            return Message.fromBytes(reply);
+            System.out.println(Message.fromBytes(receivedMsgBytes));
+            return Message.fromBytes(receivedMsgBytes);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -33,10 +33,13 @@ public class Topic implements Serializable {
     }
 
     public void addClient(String clientID){
-        this.clients.put(clientID, this.messages.size() - 1);
+        this.clients.put(clientID, this.messages.size() == 0 ? 0 :  this.messages.size() - 1);
     }
 
-    public void removeClient(String clientID) { this.clients.remove(clientID); }
+    public void removeClient(String clientID) {
+        this.clients.remove(clientID);
+        deleteOldMessages();
+    }
 
     public boolean hasClient(String clientId) {
         return this.clients.containsKey(clientId);
@@ -48,7 +51,7 @@ public class Topic implements Serializable {
         if(idx == null) throw new RuntimeException("No Client with ID: " + clientID);
 
         if(idx == this.messages.size()){
-            return new String("Already got everything in topic.").getBytes(ZMQ.CHARSET);
+            return "Already got everything in topic.".getBytes(ZMQ.CHARSET);
         } else {
             byte[] message = this.messages.get(idx);
             incrementClientIndex(clientID);
@@ -90,5 +93,14 @@ public class Topic implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(getName());
+    }
+
+    @Override
+    public String toString() {
+        return "Topic{" +
+                "name='" + name + '\'' +
+                ", messages=" + messages +
+                ", clients=" + clients +
+                '}';
     }
 }

@@ -11,9 +11,10 @@ public class ServerSerializer {
 
     public ServerSerializer() {
         this.dir = "topics/";
+        new File(dir).mkdirs();
     }
     
-    public void writeTopics(Iterable<Topic> topics) {
+    public synchronized void writeTopics(Iterable<Topic> topics) {
         for(Topic topic : topics) {
             writeTopic(topic);
         }
@@ -33,15 +34,20 @@ public class ServerSerializer {
         return ret;
     }
 
-    public void writeTopic(Topic topic) {
+    public synchronized void writeTopic(Topic topic) {
+        System.out.println("Writing topic");
         try {
             File ftopic = new File(dir + topic.getName());
+            System.out.println("Creating file");
             ftopic.createNewFile();
+            System.out.println("Created file");
             FileOutputStream fout = new FileOutputStream(ftopic);
             ObjectOutputStream oout = new ObjectOutputStream(fout);
+            System.out.println("Writing object");
             oout.writeObject(topic);
             oout.close();
             fout.close();
+            System.out.println("Exit writeTopic");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

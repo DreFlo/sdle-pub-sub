@@ -17,11 +17,11 @@ import java.util.concurrent.Executors;
 public class ConcreteServer implements Server {
 
     private final int NTHREADS = 4;
-    private ZContext context;
-    private Socket socket;
-    private Map<String, Topic> topics;
-    private ExecutorService executorService;
-    private ServerSerializer serverSerializer;
+    private final ZContext context;
+    private final Socket socket;
+    private final Map<String, Topic> topics;
+    private final ExecutorService executorService;
+    private final ServerSerializer serverSerializer;
 
     public ConcreteServer() {
         try {
@@ -37,7 +37,7 @@ public class ConcreteServer implements Server {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        this.topics = new HashMap<>();
+        this.topics = serverSerializer.readTopics();
     }
 
     public static void main(String[] args) {
@@ -100,7 +100,7 @@ public class ConcreteServer implements Server {
         return topics.get(topic).hasClient(clientID);
     }
 
-    public void addClientToTopic(String topic, String clientId) {
+    public synchronized void addClientToTopic(String topic, String clientId) {
         if (!topics.containsKey(topic)) {
             topics.put(topic, new Topic(topic));
         }
@@ -108,7 +108,7 @@ public class ConcreteServer implements Server {
         saveTopic(topic);
     }
 
-    public void rmClientFromTopic(String topic, String clientId) {
+    public synchronized void rmClientFromTopic(String topic, String clientId) {
         if (!this.topics.containsKey(topic)) {
             return;
         }
@@ -116,20 +116,32 @@ public class ConcreteServer implements Server {
         saveTopic(topic);
     }
 
-    public byte[] getClientMessagesPerTopic(String topic, String clientID) {
+    public synchronized byte[] getClientMessageForTopic(String topic, String clientID) {
+        System.out.println("Getting message");
         byte[] msg = this.topics.get(topic).getMessage(clientID);
+        System.out.println("Saving topic");
         saveTopic(topic);
+        System.out.println("Return message");
         return msg;
     }
 
-    public void putMessageInTopic(String topic, byte[] message) {
-        if (topics.containsKey(topic)) {
-            topics.get(topic).addMessage(message);
-            saveTopic(topic);
+    public synchronized void putMessageInTopic(String topic, byte[] message) {
+        if (!topics.containsKey(topic)) {
+            System.out.println("Creating new topic " + topic);
+            topics.put(topic, new Topic(topic));
         }
+        System.out.println("Adding message to topic");
+        topics.get(topic).addMessage(message);
+        System.out.println("Saving topic");
+        saveTopic(topic);
     }
 
     private void saveTopic(String topic) {
         serverSerializer.writeTopic(topics.get(topic));
+        System.out.println("Saved topic");
+    }
+
+    public Topic getTopic(String topic) {
+        return topics.get(topic);
     }
 }

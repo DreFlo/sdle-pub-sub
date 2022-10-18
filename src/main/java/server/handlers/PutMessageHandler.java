@@ -13,11 +13,8 @@ public class PutMessageHandler extends Handler<PutMessage, ConcreteServer>{
 
     @Override
     public void run() {
-        if(!this.server.clientInTopic(this.message.getTopic(), new String(address))){
-            this.server.send(this.address, new NotSubscribedMessage());
-            return;
-        }
         this.server.putMessageInTopic(this.message.getTopic(), this.message.getArticle());
+        System.out.println(server.getTopic(message.getTopic()));
         this.server.send(this.address, new PutReplyMessage());
     }
 }
