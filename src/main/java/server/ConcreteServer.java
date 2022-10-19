@@ -1,6 +1,8 @@
 package server;
 
 import messages.Message;
+import messages.clientMessages.ShutdownServerMessage;
+import messages.serverMessages.ShutdownReplyMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
@@ -59,13 +61,23 @@ public class ConcreteServer implements Server {
 
                 System.out.println(received.message());
 
+                if (received.message() instanceof ShutdownServerMessage) {
+                    send(receive().address(), new ShutdownReplyMessage());
+                    items.close();
+                    break;
+                }
+
                 Handler<? extends Message, ? extends Server> handler = MessageHandlerBuilder.getHandler(
                         received.address(), received.message(), this
                 );
 
+                if (handler == null) continue;
+
                 executorService.submit(handler);
             }
         }
+        executorService.shutdown();
+        System.out.println("Exit");
     }
 
     @Override
@@ -76,8 +88,6 @@ public class ConcreteServer implements Server {
         if(empty.length != 0) throw new RuntimeException("Problem in message");
 
         System.out.println(new String(client_addr));
-        // Message receivedMessage = this.receive();
-        // System.out.println(receivedMessage.getClientId());
         byte[] receivedMsgBytes = socket.recv(0);
 
         try {
@@ -95,7 +105,7 @@ public class ConcreteServer implements Server {
     }
 
     public boolean clientInTopic(String topic, String clientID) {
-        // TODO: exception -> topic does not exist
+
         if(!this.topics.containsKey(topic)) return false;
         return topics.get(topic).hasClient(clientID);
     }
@@ -118,7 +128,9 @@ public class ConcreteServer implements Server {
 
     public synchronized byte[] getClientMessageForTopic(String topic, String clientID) {
         System.out.println("Getting message");
+        System.out.println(topics.get(topic));
         byte[] msg = this.topics.get(topic).getMessage(clientID);
+        System.out.println(topics.get(topic));
         System.out.println("Saving topic");
         saveTopic(topic);
         System.out.println("Return message");

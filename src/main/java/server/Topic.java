@@ -33,7 +33,8 @@ public class Topic implements Serializable {
     }
 
     public void addClient(String clientID){
-        this.clients.put(clientID, this.messages.size() == 0 ? 0 :  this.messages.size() - 1);
+        if(!this.clients.containsKey(clientID))
+            this.clients.put(clientID, this.messages.size() == 0 ? 0 :  this.messages.size());
     }
 
     public void removeClient(String clientID) {
@@ -51,20 +52,18 @@ public class Topic implements Serializable {
         if(idx == null) throw new RuntimeException("No Client with ID: " + clientID);
 
         if(idx == this.messages.size()){
-            return "Already got everything in topic.".getBytes(ZMQ.CHARSET);
+            return "Nothing to get in topic.".getBytes(ZMQ.CHARSET);
         } else {
             byte[] message = this.messages.get(idx);
-            incrementClientIndex(clientID);
-            deleteOldMessages();
             return message;
         }
     }
 
-    private void deleteOldMessages() {
+    public void deleteOldMessages() {
         OptionalInt minIndex = clients.values().stream().mapToInt(v -> v).min();
 
         if (minIndex.isPresent()) {
-            this.messages = this.messages.subList(minIndex.getAsInt(), this.messages.size());
+            this.messages.subList(0, minIndex.getAsInt()).clear();
             for(Map.Entry<String, Integer> client : this.clients.entrySet()){
                 this.clients.replace(client.getKey(), client.getValue() - minIndex.getAsInt());
             }

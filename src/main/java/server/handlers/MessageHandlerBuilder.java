@@ -1,10 +1,7 @@
 package server.handlers;
 
 import messages.Message;
-import messages.clientMessages.GetMessage;
-import messages.clientMessages.PutMessage;
-import messages.clientMessages.SubscribeMessage;
-import messages.clientMessages.UnsubscribeMessage;
+import messages.clientMessages.*;
 import server.ConcreteServer;
 import server.Server;
 
@@ -20,6 +17,8 @@ public class MessageHandlerBuilder {
                 return new PutMessageHandler(address, putMessage, concreteServer);
             } else if (message instanceof UnsubscribeMessage unsubscribeMessage) {
                 return new UnsubscribeMessageHandler(address, unsubscribeMessage, concreteServer);
+            } else if (message instanceof GetMessageAck getMessageAck) {
+                return new GetMessageAckHandler(address, getMessageAck, concreteServer);
             }
         }
         return null;

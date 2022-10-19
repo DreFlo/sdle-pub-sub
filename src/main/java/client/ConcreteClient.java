@@ -1,22 +1,17 @@
 package client;
 
-import messages.clientMessages.GetMessage;
+import messages.clientMessages.*;
 import messages.Message;
-import messages.clientMessages.PutMessage;
-import messages.clientMessages.SubscribeMessage;
-import messages.clientMessages.UnsubscribeMessage;
 import messages.serverMessages.*;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
-import server.ReceivePair;
 
 import java.io.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ConcreteClient implements Client {
     private ZContext context;
@@ -77,13 +72,42 @@ public class ConcreteClient implements Client {
                     this.subscribe(args[1]);
                     break;
                 case "unsubscribe":
+                    this.unsubscribe(args[1]);
                     break;
                 case "exit":
                     exit = true;
                     break;
+                case "topics":
+                    if(subscribed.isEmpty()){
+                        System.out.println("No topics subscribed.");
+                    } else {
+                        System.out.println("Subscribed topics:");
+                    }
+                    for (String s : subscribed) {
+                        System.out.println("\t" + s);
+                    }
+                    break;
+                case "help":
+                    printHelp();
+                    break;
+                case "shutdown-server":
+                    shutdownServer();
+                    break;
+                default:
+                    System.out.println("'" + args[0] + "' is not recognized as a command.");
+                    break;
             }
         }
+    }
 
+    private void printHelp() {
+        System.out.println("subscribe topic \t Subscribe to a topic");
+        System.out.println("unsubscribe topic \t Unsubscribe from a topic");
+        System.out.println("put topic message \t Put message in a topic");
+        System.out.println("get [topic] \t\t Get message from all topics [or a single topic]");
+        System.out.println("topics \t\t\t Print all topics currently subscribed");
+        System.out.println("shutdown-server \t Shutdown the server");
+        System.out.println("exit \t\t\t Exit the console");
     }
 
     @Override
@@ -103,6 +127,21 @@ public class ConcreteClient implements Client {
         if (receivedMessage instanceof TopicArticleMessage){
             System.out.println("Got message:");
             System.out.println(new String(((TopicArticleMessage) receivedMessage).getArticle()));
+
+            try {
+                send(new GetMessageAck(topic));
+            } catch (MessageTypeNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+
+            receivedMessage = this.receive();
+            if(receivedMessage instanceof AckMessage){
+                System.out.println("Received correct acknowledgment.");
+            }
+            else System.out.println("Invalid response from server after acknowledging get message.");
+        }
+        else if (receivedMessage instanceof NonExistentTopicMessage) {
+            System.out.println("There is no topic: " + topic);
         }
         else if (receivedMessage instanceof NotSubscribedMessage) {
             System.out.println("Not subscribed to topic: " + topic);
@@ -178,6 +217,16 @@ public class ConcreteClient implements Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void shutdownServer() {
+        try {
+            send(new ShutdownServerMessage());
+        } catch (MessageTypeNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+
+        this.receive();
     }
 }
 

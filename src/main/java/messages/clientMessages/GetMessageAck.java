@@ -2,10 +2,10 @@ package messages.clientMessages;
 
 import messages.Message;
 
-public class GetMessage extends Message {
+public class GetMessageAck extends Message {
     private final String topic;
 
-    public GetMessage(String topic) {
+    public GetMessageAck(String topic){
         this.topic = topic;
     }
 

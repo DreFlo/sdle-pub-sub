@@ -45,10 +45,14 @@ public class ServerSerializer {
             ObjectOutputStream oout = new ObjectOutputStream(fout);
             System.out.println("Writing object");
             oout.writeObject(topic);
+            System.out.println("Written object");
             oout.close();
+            System.out.println("OOUT closed");
             fout.close();
+            System.out.println("FOUT closed");
             System.out.println("Exit writeTopic");
         } catch (IOException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
