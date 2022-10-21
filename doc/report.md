@@ -8,7 +8,12 @@ Aside from that, the service should guarantee "exactly-once" delivery and handle
 
 ## Implementation
 
-The system was implemented in Java, using JeroMQ.
+The technologies used in the development of this project were the JAVA programming language and the JeroMQ library, a java implementation of ZeroMQ.
+
+The team decided to use this object-oriented language because of its portability, security and ease of use. Java also has a very extensive user library and is very well documented. Beyond that, theres is a large community of developers and students around this language, the team considered this to be a major advantage since this makes more resources and suport available to the team members and flattens the technology's learning curve
+
+Regarding the network messaging functionalities, the team used JeroMQ, a pure java implementation of the ZeroMQ open-source universal messaging library.The benefits of using this library rely on it being open-source high performance library that provides a messaging queque without the need of a dedicated message broker. It has asynchronous I/O engines which are used  to carry atomic messages in  applications and offers support for numerous patterns such as publisher-subscriber, request-reply and client-server, making it a perfect fit in concurrent or distributed systems
+
 
 ### Server
 
@@ -73,6 +78,9 @@ The application followed a client-server architecture. The main class _ConcreteS
 to treat incoming requests.
 The main class _ConcreteClient_ allows a user to get or put messages and subscribe or unsubscribe to topics. This is done by typing simple messages in the terminal (ex: ```get [topic]```).  
 
+### Race Condition (Better title?)
+
+Concurrency situations where a function's execution made sensible changes to date had to be run in a synchronous manner. This was implemented with the aid of the  'syncronized' java keyword in the function declaration. This prevents methods that manipulate topic subscriptions or messages from being run multiple times simultaneously and enforces a synchronous execution, thus avoiding concurrency situations between clients and data inconsistency.
 
 ## Failing Circumstances
 
