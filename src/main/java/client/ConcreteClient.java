@@ -17,15 +17,15 @@ public class ConcreteClient implements Client {
     private ZContext context;
     private ZMQ.Socket socket;
     private List<String> subscribed;
-
+    private byte[] id;
+    private final static int receivedTimeout = 10000;
 
     public ConcreteClient(String id) {
         this.subscribed = new ArrayList<>();
+        this.id = id.getBytes();
         try {
             this.context = new ZContext();
-            this.socket = context.createSocket(SocketType.REQ);
-            this.socket.setIdentity(id.getBytes());
-            socket.connect("tcp://localhost:5555");
+            this.createSocket();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -117,28 +117,37 @@ public class ConcreteClient implements Client {
 
     @Override
     public void get(String topic) {
-        try {
+        /*try {
             send(new GetMessage(topic));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
 
-        Message receivedMessage = this.receive();
+        Message receivedMessage = this.receive();*/
+
+        Message receivedMessage = this.sendAndReceive(new GetMessage(topic));
+
         if (receivedMessage instanceof TopicArticleMessage){
             System.out.println("Got message:");
             System.out.println(new String(((TopicArticleMessage) receivedMessage).getArticle()));
 
-            try {
+            /*try {
                 send(new GetMessageAck(topic));
             } catch (MessageTypeNotSupportedException e) {
                 throw new RuntimeException(e);
             }
 
-            receivedMessage = this.receive();
+            receivedMessage = this.receive();*/
+
+            receivedMessage = this.sendAndReceive(new GetMessageAck(topic));
+
             if(receivedMessage instanceof AckMessage){
                 System.out.println("Received correct acknowledgment.");
             }
             else System.out.println("Invalid response from server after acknowledging get message.");
+        }
+        else if(receivedMessage instanceof EmptyTopicMessage){
+            System.out.println("There is no messages to get.");
         }
         else if (receivedMessage instanceof NonExistentTopicMessage) {
             System.out.println("There is no topic: " + topic);
@@ -151,13 +160,15 @@ public class ConcreteClient implements Client {
 
     @Override
     public void put(String topic, byte[] message) {
-        try {
+        /*try {
             send(new PutMessage(topic, message));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
 
-        Message receivedMessage = this.receive();
+        Message receivedMessage = this.receive();*/
+
+        Message receivedMessage = this.sendAndReceive(new PutMessage(topic, message));
 
         if(receivedMessage instanceof PutReplyMessage){
             System.out.println("Successful put in topic: " + topic);
@@ -168,13 +179,17 @@ public class ConcreteClient implements Client {
     @Override
     public void subscribe(String topic) {
         subscribed.add(topic);
-        try {
+
+        /*try {
             send(new SubscribeMessage(topic));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
 
-        Message receivedMessage = this.receive();
+        Message receivedMessage = this.receive();*/
+
+        Message receivedMessage = this.sendAndReceive(new SubscribeMessage(topic));
+
         if(receivedMessage instanceof SubscriptionReplyMessage){
             if(((SubscriptionReplyMessage) receivedMessage).getSubscriptionState() == SubscriptionState.SUBSCRIBED)
                 System.out.println("Successful subscription to topic: " + topic);
@@ -187,13 +202,16 @@ public class ConcreteClient implements Client {
     public void unsubscribe(String topic) {
         subscribed.remove(topic);
 
-        try {
+        /*try {
             send(new UnsubscribeMessage(topic));
         } catch (MessageTypeNotSupportedException e) {
             throw new RuntimeException(e);
         }
 
-        Message receivedMessage = this.receive();
+        Message receivedMessage = this.receive();*/
+
+        Message receivedMessage = this.sendAndReceive(new UnsubscribeMessage(topic));
+
         if(receivedMessage instanceof SubscriptionReplyMessage){
             if(((SubscriptionReplyMessage) receivedMessage).getSubscriptionState() == SubscriptionState.UNSUBSCRIBED)
                 System.out.println("Successful unsubscription to topic: " + topic);
@@ -202,14 +220,36 @@ public class ConcreteClient implements Client {
         else System.out.println("Invalid response from server in unsubscription attempt.");
     }
 
+    public Message sendAndReceive(Message message){
+        Message receivedMessage;
+
+        do {
+            try {
+                this.send(message);
+            } catch (MessageTypeNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+
+            receivedMessage = this.receive();
+        } while (receivedMessage == null);
+
+        return receivedMessage;
+    }
+
     @Override
     public void send(Message message) throws MessageTypeNotSupportedException {
-        socket.send(message.toBytes(), 0);
+        socket.send(message.toBytes());
     }
 
     @Override
     public Message receive() {
         byte[] receivedMsgBytes = socket.recv(0);
+
+        if(receivedMsgBytes == null){
+            this.recreateSocket();
+            System.out.println("Receive timeout. Trying again.");
+            return null;
+        }
 
         try {
             System.out.println(Message.fromBytes(receivedMsgBytes));
@@ -227,6 +267,17 @@ public class ConcreteClient implements Client {
         }
 
         this.receive();
+    }
+
+    private void createSocket(){
+        this.socket = context.createSocket(SocketType.REQ);
+        this.socket.setIdentity(this.id);
+        this.socket.setReceiveTimeOut(ConcreteClient.receivedTimeout);
+        socket.connect("tcp://localhost:5555");
+    }
+    private void recreateSocket(){
+        this.socket.close();
+        this.createSocket();
     }
 }
 

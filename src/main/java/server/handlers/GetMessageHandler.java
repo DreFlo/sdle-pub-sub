@@ -1,6 +1,7 @@
 package server.handlers;
 
 import messages.clientMessages.GetMessage;
+import messages.serverMessages.EmptyTopicMessage;
 import messages.serverMessages.NonExistentTopicMessage;
 import messages.serverMessages.NotSubscribedMessage;
 import messages.serverMessages.TopicArticleMessage;
@@ -23,8 +24,13 @@ public class GetMessageHandler extends Handler<GetMessage, ConcreteServer>{
             this.server.send(this.address, new NotSubscribedMessage());
             return;
         }
-        byte[] article = this.server.getClientMessageForTopic(this.message.getTopic(), new String(address));
-        System.out.println(server.getTopic(message.getTopic()));
-        this.server.send(address, new TopicArticleMessage(article));
+        byte[] article = this.server.getTopic(this.message.getTopic()).getMessage(new String(address));
+        if(article == null){
+            this.server.send(address, new EmptyTopicMessage());
+        }
+        else{
+            System.out.println(server.getTopic(message.getTopic()));
+            this.server.send(address, new TopicArticleMessage(article));
+        }
     }
 }

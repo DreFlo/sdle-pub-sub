@@ -1,6 +1,6 @@
 # SDLE First Assignment
 
-SDLE First Assignment of group T01G06.
+SDLE First Assignment of group 16.
 
 Group members:
 

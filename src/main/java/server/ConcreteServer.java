@@ -114,8 +114,10 @@ public class ConcreteServer implements Server {
         if (!topics.containsKey(topic)) {
             topics.put(topic, new Topic(topic));
         }
-        topics.get(topic).addClient(clientId);
-        saveTopic(topic);
+        if(!topics.get(topic).hasClient(clientId)){
+            topics.get(topic).addClient(clientId);
+            saveTopic(topic);
+        }
     }
 
     public synchronized void rmClientFromTopic(String topic, String clientId) {
@@ -126,15 +128,9 @@ public class ConcreteServer implements Server {
         saveTopic(topic);
     }
 
-    public synchronized byte[] getClientMessageForTopic(String topic, String clientID) {
-        System.out.println("Getting message");
-        System.out.println(topics.get(topic));
-        byte[] msg = this.topics.get(topic).getMessage(clientID);
-        System.out.println(topics.get(topic));
-        System.out.println("Saving topic");
+    public synchronized void updateTopic(String topic) {
+        System.out.println("Saving topic : " + topic);
         saveTopic(topic);
-        System.out.println("Return message");
-        return msg;
     }
 
     public synchronized void putMessageInTopic(String topic, byte[] message) {

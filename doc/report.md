@@ -38,13 +38,16 @@ which handles task scheduling.
 The client is implemented as an instance of a runnable class **ConcreteClient** that implements the **Client** interface.
 The **Client** interface has seven methods specified: 
 - *send()*: to send a message to the server;
-- *receive()*: to receive a message from the server
-- *get(String topic)*: to get a message from a specific topic
-- *get()*: to get a message for each of the topics the client is subscribed to
-- *put()*: to publish a message to a topic
-- *subscribe()*: 
-The client uses a *REQ* socket to send requests and receive replies. When the client makes a request it must receive a 
-reply to that request or go through the timeout procedure before being able to do make any other request. 
+- *receive()*: to receive a message from the server;
+- *get(String topic)*: to get a message from a specific topic;
+- *get()*: to get a message for each of the topics the client is subscribed to;
+- *put()*: to publish a message to a topic;
+- *subscribe()*: to subscribe to a topic;
+- *unsubscribe()*: to unsubscribe to a topic.
+
+The client uses a *REQ* socket to send requests and receive replies.
+
+For that, it makes use of timeouts and, as such, in the event of communication becoming unavailable for a certain amount of time, the client will time-out after some time, 10 seconds, after which it will attempt to communicate again, by resending the message to the server.
 
 ### Messages
 
@@ -55,22 +58,25 @@ All the specific __Messages__ extends the **Message** abstract class.
 The __clientMessages__ are messages that the client sends to server, in this case, represents all the requests sent to the server.
 
 There are 5 types of __clientMessages__:
- - _GetMessage_: Consume the last unread message of the specified topic from the server
- - _GetMessageAck_:
- - _PutMessage_: Publish a message on the specified topic in the server
- - _ShutdownServerMessage_: Shutdown the server
- - _SubscribeMessage_: Subscribe specified topic
- - _UnsubscribeMessage_: Unsubscribe specified topic
+ - _GetMessage_: Consume the last unread message of the specified topic from the server;
+ - _GetMessageAck_: Acknowledge having received a requested message from the server;
+ - _PutMessage_: Publish a message on the specified topic in the server;
+ - _ShutdownServerMessage_: Shutdown the server;
+ - _SubscribeMessage_: Subscribe specified topic;
+ - _UnsubscribeMessage_: Unsubscribe specified topic.
 
 The __serverMessages__ are messages that the server send to client, in this case, represents all the replies sent to client.
 
 There are 5 types of __serverMessages__:
- - _NotSubscribedMessage_: Serves as an acknowledgment message that tells to the client that are not subscribed to a topic.
- - _ShutdownReplyMessage_: Serves as an acknowledgment message that tells to the client that the server is shutdown.
- - _PutReplyMessage_: Serves as an acknowledgment message that guarantees to the client that the message was put on the topic.
+ - _NotSubscribedMessage_: Serves as an acknowledgment message that tells to the client that are not subscribed to a topic;
+ - _ShutdownReplyMessage_: Serves as an acknowledgment message that tells to the client that the server is shutdown.;
+ - _PutReplyMessage_: Serves as an acknowledgment message that guarantees to the client that the message was put on the topic.;
  - _SubscriptionReplyMessage_: Sends the result of subscribe/unsubscribe operation. The responses are: __SUBSCRIBED__ if
-the client is now subscribed to a topic, __UNSUBSCRIBED__ if the client is not subscribed to a topic and __ERROR__ if occurs an error.
- - _TopicArticleMessage_: Sends a message from a topic to the client. Usually is the reply of a get operation.
+the client is now subscribed to a topic, __UNSUBSCRIBED__ if the client is not subscribed to a topic and __ERROR__ if occurs an error;
+ - _TopicArticleMessage_: Sends a message from a topic to the client. Usually is the reply of a get operation.;
+ - _AckMessage_: Acknowledge the confirmation that the client has received a requested message;
+ - _EmptyTopicMessage_: Serves as an acknowledgment that tells the client there are no messages available for them to get from a topic;
+ - _NonExistentTopicMessage_: Serves as an acknowledgement that tells the client the topic they requested a message from doesn't exist.
 
 ## Design
 
@@ -78,25 +84,37 @@ The application followed a client-server architecture. The main class _ConcreteS
 to treat incoming requests.
 The main class _ConcreteClient_ allows a user to get or put messages and subscribe or unsubscribe to topics. This is done by typing simple messages in the terminal (ex: ```get [topic]```).  
 
-### Race Condition (Better title?)
-
-Concurrency situations where a function's execution made sensible changes to date had to be run in a synchronous manner. This was implemented with the aid of the  'syncronized' java keyword in the function declaration. This prevents methods that manipulate topic subscriptions or messages from being run multiple times simultaneously and enforces a synchronous execution, thus avoiding concurrency situations between clients and data inconsistency.
 
 ## Failing Circumstances
 
-# Exactly-once on put
+### Exactly-once
 
-In a __get__ request, the following happens, sequentially:
-- A client sends a _GetMessage_, with the topic in which they want the message from.
-- If the client is subscribed to the topic, the server replies with a _TopicArticleMessage_, if it is not subscribed, it will send a _NotSubscribedMessage_ and if the topic doesn't exist, it will reply with a _NonExistentTopicMessage_  
-- Should the client received a _TopicArticleMessage_, it will then send an _GetMessageAckHandler_ to the server. Otherwise, it won't send anything else.
+In a __put__ request, the following happens, sequentially:
+- A client sens a _PutMessage_, with the topic and message;
+- The server will, if necessary, create the topic and then place the message in it, replying to the client with a _PutReplyMessage_
+
+Since the topics and its messages are saved on non-volatile memory, thus, even with a server failure, no information will be lost, and, thus, ensure that as long as a previous subscriber calls the __get__ method enough times, it will get that message.
+
+In a __get__ request, the events are as followed:
+- A client sends a _GetMessage_, with the topic in which they want the message from;
+- If the client is subscribed to the topic, the server replies with a _TopicArticleMessage_. If it is not subscribed, it will send a _NotSubscribedMessage_. If the topic doesn't exist, it will reply with a _NonExistentTopicMessage_;
+- Should the client receive a _TopicArticleMessage_, it will then send an _GetMessageAckHandler_ to the server. Otherwise, it won't send anything else;
 - Finally, having sent a message before, the client will then receive an _AckMessage_ from the server.
 
-By having the client acknowledging that it received a message from a topic, it will ensure that the client won't be sent back the same message once again.
+In the server, not only are the subscribers for each topic saved, but also the last message they have gotten from it, which will only be updated after a client acknowledges that it received a message from a topic.
 
-# Exactly-once on get
+Since the last message the client received is saved and since the client acknowledges it when it receives one, meaning no re-transmits of the same message, we can ensure that the client won't receive the same message after having received it successfully before.
 
-# Contingency plan
+However, there are a few rare circumstances where exactly-once would not be guaranteed:
+ - If the server crashes after receiving a _PutMessage_ and handling it, but before it sends a reply to the client, the client will then resend the request, thus resulting in a duplicate message in the server, which, for the client, will seem as if it will receive the same message twice in a row in eventual future __get__ requests.
+ - If a client crashes after receiving a message requested from the serve, but before acknowledging it to the server, the server won't have updated the last message read from the client and, thus, when the client sends another __get__ request, it will received the same message as before.
+
+### Race Condition
+
+Concurrency situations where a function's execution made sensible changes to date had to be run in a synchronous manner. This was implemented with the aid of the  'synchronized' java keyword in the function declaration. This prevents methods that manipulate topic subscriptions or messages from being run multiple times simultaneously and enforces a synchronous execution, thus avoiding concurrency situations between clients and data inconsistency.
+
+
+### Contingency plan
 
 Whenever a new topic, message or subscriber is added to the system, the server saves that data on non-volatile storage.
 As such, were a server to crash, it wouldn't lose any previous data, aside from anything being currently handled.

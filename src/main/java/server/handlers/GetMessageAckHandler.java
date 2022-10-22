@@ -11,8 +11,9 @@ public class GetMessageAckHandler extends Handler<GetMessageAck, ConcreteServer>
 
     @Override
     public void run(){
-        server.getTopic(message.getTopic()).incrementClientIndex(new String(address));
-        server.getTopic(message.getTopic()).deleteOldMessages();
+        this.server.getTopic(message.getTopic()).incrementClientIndex(new String(address));
+        this.server.getTopic(message.getTopic()).deleteOldMessages();
+        this.server.updateTopic(message.getTopic());
         this.server.send(this.address, new AckMessage());
     }
 

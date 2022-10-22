@@ -52,7 +52,7 @@ public class Topic implements Serializable {
         if(idx == null) throw new RuntimeException("No Client with ID: " + clientID);
 
         if(idx == this.messages.size()){
-            return "Nothing to get in topic.".getBytes(ZMQ.CHARSET);
+            return null;
         } else {
             byte[] message = this.messages.get(idx);
             return message;
