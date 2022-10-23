@@ -55,7 +55,7 @@ public class ConcreteClient implements Client {
         Console cnsl = System.console();
         boolean exit = false;
         while (!exit){
-            String line = cnsl.readLine("Enter command: ");
+            String line = cnsl.readLine("Enter command (type help for functionality): ");
             String[] args = line.split(" ");
 
             switch(args[0]){
@@ -90,9 +90,6 @@ public class ConcreteClient implements Client {
                 case "help":
                     printHelp();
                     break;
-                case "shutdown-server":
-                    shutdownServer();
-                    break;
                 default:
                     System.out.println("'" + args[0] + "' is not recognized as a command.");
                     break;
@@ -101,12 +98,11 @@ public class ConcreteClient implements Client {
     }
 
     private void printHelp() {
-        System.out.println("subscribe topic \t Subscribe to a topic");
-        System.out.println("unsubscribe topic \t Unsubscribe from a topic");
-        System.out.println("put topic message \t Put message in a topic");
+        System.out.println("subscribe <topic> \t Subscribe to a topic");
+        System.out.println("unsubscribe <topic> \t Unsubscribe from a topic");
+        System.out.println("put <topic> <message> \t Put message in a topic");
         System.out.println("get [topic] \t\t Get message from all topics [or a single topic]");
         System.out.println("topics \t\t\t Print all topics currently subscribed");
-        System.out.println("shutdown-server \t Shutdown the server");
         System.out.println("exit \t\t\t Exit the console");
     }
 
@@ -117,27 +113,12 @@ public class ConcreteClient implements Client {
 
     @Override
     public void get(String topic) {
-        /*try {
-            send(new GetMessage(topic));
-        } catch (MessageTypeNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-
-        Message receivedMessage = this.receive();*/
 
         Message receivedMessage = this.sendAndReceive(new GetMessage(topic));
 
         if (receivedMessage instanceof TopicArticleMessage){
             System.out.println("Got message:");
             System.out.println(new String(((TopicArticleMessage) receivedMessage).getArticle()));
-
-            /*try {
-                send(new GetMessageAck(topic));
-            } catch (MessageTypeNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
-
-            receivedMessage = this.receive();*/
 
             receivedMessage = this.sendAndReceive(new GetMessageAck(topic));
 
@@ -160,14 +141,6 @@ public class ConcreteClient implements Client {
 
     @Override
     public void put(String topic, byte[] message) {
-        /*try {
-            send(new PutMessage(topic, message));
-        } catch (MessageTypeNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-
-        Message receivedMessage = this.receive();*/
-
         Message receivedMessage = this.sendAndReceive(new PutMessage(topic, message));
 
         if(receivedMessage instanceof PutReplyMessage){
@@ -179,14 +152,6 @@ public class ConcreteClient implements Client {
     @Override
     public void subscribe(String topic) {
         subscribed.add(topic);
-
-        /*try {
-            send(new SubscribeMessage(topic));
-        } catch (MessageTypeNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-
-        Message receivedMessage = this.receive();*/
 
         Message receivedMessage = this.sendAndReceive(new SubscribeMessage(topic));
 
@@ -201,14 +166,6 @@ public class ConcreteClient implements Client {
     @Override
     public void unsubscribe(String topic) {
         subscribed.remove(topic);
-
-        /*try {
-            send(new UnsubscribeMessage(topic));
-        } catch (MessageTypeNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-
-        Message receivedMessage = this.receive();*/
 
         Message receivedMessage = this.sendAndReceive(new UnsubscribeMessage(topic));
 
@@ -257,16 +214,6 @@ public class ConcreteClient implements Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void shutdownServer() {
-        try {
-            send(new ShutdownServerMessage());
-        } catch (MessageTypeNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-
-        this.receive();
     }
 
     private void createSocket(){

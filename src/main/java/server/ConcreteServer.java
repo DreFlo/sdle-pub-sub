@@ -1,8 +1,6 @@
 package server;
 
 import messages.Message;
-import messages.clientMessages.ShutdownServerMessage;
-import messages.serverMessages.ShutdownReplyMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
@@ -61,12 +59,6 @@ public class ConcreteServer implements Server {
 
                 System.out.println(received.message());
 
-                if (received.message() instanceof ShutdownServerMessage) {
-                    send(receive().address(), new ShutdownReplyMessage());
-                    items.close();
-                    break;
-                }
-
                 Handler<? extends Message, ? extends Server> handler = MessageHandlerBuilder.getHandler(
                         received.address(), received.message(), this
                 );
@@ -76,7 +68,6 @@ public class ConcreteServer implements Server {
                 executorService.submit(handler);
             }
         }
-        executorService.shutdown();
         System.out.println("Exit");
     }
 

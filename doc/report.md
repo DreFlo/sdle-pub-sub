@@ -12,7 +12,7 @@ The technologies used in the development of this project were the JAVA programmi
 
 The team decided to use this object-oriented language because of its portability, security and ease of use. Java also has a very extensive user library and is very well documented. Beyond that, theres is a large community of developers and students around this language, the team considered this to be a major advantage since this makes more resources and suport available to the team members and flattens the technology's learning curve
 
-Regarding the network messaging functionalities, the team used JeroMQ, a pure java implementation of the ZeroMQ open-source universal messaging library.The benefits of using this library rely on it being open-source high performance library that provides a messaging queque without the need of a dedicated message broker. It has asynchronous I/O engines which are used  to carry atomic messages in  applications and offers support for numerous patterns such as publisher-subscriber, request-reply and client-server, making it a perfect fit in concurrent or distributed systems
+Regarding the network messaging functionalities, the team used JeroMQ, a pure java implementation of the ZeroMQ open-source universal messaging library.The benefits of using this library rely on it being open-source high performance library that provides a messaging queque without the need of a dedicated message broker. It has asynchronous I/O engines which are used  to carry atomic messages in applications and offers support for numerous patterns such as publisher-subscriber, request-reply and client-server, making it a perfect fit in concurrent or distributed systems
 
 
 ### Server
@@ -80,9 +80,9 @@ the client is now subscribed to a topic, __UNSUBSCRIBED__ if the client is not s
 
 ## Design
 
-The application followed a client-server architecture. The main class _ConcreteServer_ runs the main server and includes the necessary functions and handlers
+The application followed a client-server architecture. The main class __ConcreteServer__ runs the main server and includes the necessary functions and handlers
 to treat incoming requests.
-The main class _ConcreteClient_ allows a user to get or put messages and subscribe or unsubscribe to topics. This is done by typing simple messages in the terminal (ex: ```get [topic]```).  
+The main class __ConcreteClient__ allows a user to get or put messages and subscribe or unsubscribe to topics. This is done by typing simple messages in the terminal (ex: ```get [topic]```).  
 
 
 ## Failing Circumstances
@@ -109,10 +109,9 @@ However, there are a few rare circumstances where exactly-once would not be guar
  - If the server crashes after receiving a _PutMessage_ and handling it, but before it sends a reply to the client, the client will then resend the request, thus resulting in a duplicate message in the server, which, for the client, will seem as if it will receive the same message twice in a row in eventual future __get__ requests.
  - If a client crashes after receiving a message requested from the serve, but before acknowledging it to the server, the server won't have updated the last message read from the client and, thus, when the client sends another __get__ request, it will received the same message as before.
 
-### Race Condition
+### Race Conditions
 
-Concurrency situations where a function's execution made sensible changes to date had to be run in a synchronous manner. This was implemented with the aid of the  'synchronized' java keyword in the function declaration. This prevents methods that manipulate topic subscriptions or messages from being run multiple times simultaneously and enforces a synchronous execution, thus avoiding concurrency situations between clients and data inconsistency.
-
+In situations where two server threads were trying to access the same topic a race condition could occur, leading to data inconsistency. To avoid this we marked the functions that would access the topics as _syncrhronized_, making sure only one thread may execute them at a time.
 
 ### Contingency plan
 
